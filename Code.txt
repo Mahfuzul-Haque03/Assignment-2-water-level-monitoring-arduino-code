@@ -1,0 +1,87 @@
+#include <LiquidCrystal.h>
+
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+const int trigPin = 10;
+const int echoPin = 13;
+int distance;
+long duration;
+int level;
+const int left = 6;
+const int right = 7;
+
+void setup() {
+  // set up the LCD's number of columns and rows:
+  lcd.begin(16, 2);
+  
+  //for LCD Display
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  
+  //for motor driver
+  pinMode(left, OUTPUT);
+  pinMode(right, OUTPUT);
+  digitalWrite(left, LOW);
+  digitalWrite(right, LOW);//turn motor off initially
+  
+}
+
+void measureDistance(){
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  duration = pulseIn(echoPin, HIGH);
+  distance = duration*0.034/2 - 20; // in cm. sonar is 20 cm higher than maximum water level(full).
+}
+
+void turnOffPump(){
+  digitalWrite(left, LOW);
+  digitalWrite(right, LOW);
+  delay(5000);
+}
+void turnOnPump(){
+  digitalWrite(left, HIGH);
+  digitalWrite(right, LOW);
+  delay(5000);
+}
+
+void loop() {
+  measureDistance();
+  level = distance / 1000; // assume tank is 1meter deep.
+  level = 1 - level;
+  
+  if(level <= 0){
+    lcd.setCursor(0, 0);
+    lcd.print("Tank is empty");
+    
+    turnOnPump();
+    
+    lcd.setCursor(0, 1);
+    lcd.print("Pump is running");
+    
+  } else if(level <= 0.2){
+    lcd.setCursor(0, 0);
+    lcd.print("Almost empty");
+  }else if(level <= 0.5){
+    lcd.setCursor(0, 0);
+    lcd.print("Mostly empty");
+  }else if(level <= 0.8){
+    lcd.setCursor(0, 0);
+    lcd.print("Mostly full");
+  }else if(level < 0.1){
+    lcd.setCursor(0, 0);
+    lcd.print("Almost full");
+  }else {
+    lcd.setCursor(0, 0);
+    lcd.print("Tank is full");
+    
+    turnOffPump();
+    
+    lcd.setCursor(0, 1);
+    lcd.print("Pump is off");
+  }
+  
+  delay(1000);
+
+}
